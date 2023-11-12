@@ -1,0 +1,722 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Arvin">
+  <meta name="keywords" content="blog,arvin,hexo">
+  
+    <meta name="description" content="rsync详解一、rsync介绍1、rsync是什么1234567rsync（remote synchronize）是Liunx&#x2F;Unix下的一个远程数据同步工具。它可通过LAN&#x2F;WAN快速同步多台主机间的文件和目录，并适当利用rsync算法（差分编码）以减少数据的传输。rsync算法并不是每一次都整份传输，而是只传输两个文件的不同部分，因此其传输速度相当快。除此之外，rsync可拷贝、显示目录属">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rsync详解">
+<meta property="og:url" content="http://lvyuanj.github.io/2023/11/12/rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5/index.html">
+<meta property="og:site_name" content="Arvin">
+<meta property="og:description" content="rsync详解一、rsync介绍1、rsync是什么1234567rsync（remote synchronize）是Liunx&#x2F;Unix下的一个远程数据同步工具。它可通过LAN&#x2F;WAN快速同步多台主机间的文件和目录，并适当利用rsync算法（差分编码）以减少数据的传输。rsync算法并不是每一次都整份传输，而是只传输两个文件的不同部分，因此其传输速度相当快。除此之外，rsync可拷贝、显示目录属">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-11-12T14:33:56.000Z">
+<meta property="article:modified_time" content="2023-11-12T14:39:52.635Z">
+<meta property="article:author" content="Arvin">
+<meta property="article:tag" content="Linux, rsync">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>rsync详解 - Arvin</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"lvyuanj.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Arvin</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tools/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>工具箱</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="rsync详解"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-11-12 22:33" pubdate>
+          2023年11月12日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          68 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">rsync详解</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="rsync详解"><a href="#rsync详解" class="headerlink" title="rsync详解"></a>rsync详解</h1><h3 id="一、rsync介绍"><a href="#一、rsync介绍" class="headerlink" title="一、rsync介绍"></a>一、<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=rsync&spm=1001.2101.3001.7020">rsync</a>介绍</h3><h4 id="1、rsync是什么"><a href="#1、rsync是什么" class="headerlink" title="1、rsync是什么"></a>1、rsync是什么</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs wiki">rsync（remote synchronize）是Liunx/Unix下的一个远程数据同步工具。<br>它可通过LAN/WAN快速同步多台主机间的文件和目录，并适当利用rsync算法（差分编码）以减少数据的传输。<br><br>rsync算法并不是每一次都整份传输，而是只传输两个文件的不同部分，因此其传输速度相当快。<br><br>除此之外，rsync可拷贝、显示目录属性，以及拷贝文件，并可选择性的压缩以及递归拷贝。<br><br></code></pre></td></tr></table></figure>
+
+<h4 id="2、rsync的工作原理"><a href="#2、rsync的工作原理" class="headerlink" title="2、rsync的工作原理"></a>2、rsync的工作原理</h4><figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs xl"><span class="hljs-function"><span class="hljs-title">a</span>、客户端构造FileList，FileList包含了需要与服务器同步的所有文件信息对<span class="hljs-keyword">name</span>-&gt;</span>id<br>（id用来唯一表示文件例如MD5）<br><br>b、客户端将FileList发送到服务器。<br><br>c、服务器上rsync处理客户端发过来的FileList，构建新的NewFileList。<br> 其中根据MD5值比较，删除服务器上已经存在的文件信息对，只保留服务器上不存在或变化的文件。<br><br>d、客户端得到服务器发送过来的NewFileList，然后把NewFileList中的文件重新传输到服务器。<br></code></pre></td></tr></table></figure>
+
+<h4 id="3、rsync优点"><a href="#3、rsync优点" class="headerlink" title="3、rsync优点"></a>3、rsync优点</h4><figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm"><span class="hljs-number">1</span>）可以镜像保存整个目录树和文件系统。<br><br><span class="hljs-number">2</span>）可以很容易做到保持原来文件的权限、时间、软硬连接等。<br><br><span class="hljs-number">3</span>）无需特殊权限即可安装。<br><br><span class="hljs-number">4</span>）快速：第一次同步时rsync复制全部内容，但在下一次值传输修改过的内容<br><br><span class="hljs-number">5</span>）压缩传输：rysnc在传输的过程中可以实行压缩及解压缩操作，可以使用更少的带宽<br><br><span class="hljs-number">6</span>）安全：可以使用<span class="hljs-keyword">scp、ssh等方式来进行文件传输</span><br><span class="hljs-keyword"></span><br><span class="hljs-number">7</span>）支持匿名传输，以方便进行网站镜像<br><br><span class="hljs-number">8</span>）rsync不仅可以远程同步数据（类似于<span class="hljs-keyword">scp），而且可以本地同步数据（类似于cp），做差异同步</span><br><span class="hljs-keyword"></span><br><span class="hljs-number">9</span>）openssh <span class="hljs-number">8</span>.<span class="hljs-number">0</span>已经把<span class="hljs-keyword">scp标记为过时不建议使用了。建议用sftp或者rsync替代scp</span><br><span class="hljs-keyword"></span><br><br><span class="hljs-comment"># 需要在Liunx/Unix服务器之间互传海量数据时，建议选择rsync进行传输</span><br><br></code></pre></td></tr></table></figure>
+
+<h4 id="4、rsync认证方式"><a href="#4、rsync认证方式" class="headerlink" title="4、rsync认证方式"></a>4、rsync认证方式</h4><p>rsync有两种常用的认证方式，一种是rsync-daemon方式，另外一种是ssh方式。</p>
+<p>在平时使用过程，我们使用最多的是rsync-daemon方式。</p>
+<p><strong>注意：在使用rsync时，服务器和客户端都必须安装rsync程序</strong>。</p>
+<p><strong>rsync-daemon 认证</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs wiki">rsync在rsync-daemon认证方式下，默认监听TCP的873端口。<br><br>rsync-daemon认证方式是rsync的主要认证方式，这个也是我们经常使用的认证方式。<br>并且也只有在此种模式下，rsync才可以把密码写入到一个文件中。<br><br>注意：<br>	rsync-daemon认证方式，需要服务器和客户端都安装rsync服务<br>	并且只需要rsync服务器端启动rsync，同时配置rsync配置文件。<br>	客户端启动不启动rsync服务，都不影响同步的正常进行。<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>ssh认证</strong></p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs elixir">rsync在ssh认证方式下，可通过系统用户进行认证，即在rsync上通过ssh隧道进行传输，类似于scp工具。<br>此时同步操作不在局限于rsync中定义的同步文件夹。<br><br>注意：<br>	ssh认证方式，不需要服务器和客户端配置rsync配置文件<br>	只需要双方都安装rsync服务，并且也不需要双方启动rsync。<br><br><span class="hljs-comment"># 若rsync服务端SSH为标准端口，此时rsync使用方式如下：</span><br><br>	rsync -avz /root/test root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.10</span>.<span class="hljs-number">10</span><span class="hljs-symbol">:/root/</span><br><br><br><span class="hljs-comment"># 若rsync服务端SSH为非标准端口，可通过rsync的-e参数进行端口指定。使用方式如下：</span><br><br>	rsync -avz /root/test -e <span class="hljs-string">&#x27;ssh -p1234&#x27;</span> root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.10</span>.<span class="hljs-number">10</span><span class="hljs-symbol">:/root/</span><br><br></code></pre></td></tr></table></figure>
+
+<h3 id="二、安装rsync"><a href="#二、安装rsync" class="headerlink" title="二、安装rsync"></a>二、安装rsync</h3><blockquote>
+<p>安装rsync，我们可以分为两种方式：源码方式安装和RPM方式安装。</p>
+<p><strong>注意：rsync软件无论是服务器端还是客户端都是同一个软件包。</strong></p>
+</blockquote>
+<h4 id="1、源码方式安装"><a href="#1、源码方式安装" class="headerlink" title="1、源码方式安装"></a>1、源码方式安装</h4><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-comment"># 源码方式安装rsync，需要到其官网下载对应的安装包。rsync官网：rsync.samba.org </span><br><br><span class="hljs-number">1</span>)、下载<br>wget https:<span class="hljs-regexp">//</span>download.samba.org<span class="hljs-regexp">/pub/</span>rsync<span class="hljs-regexp">/src/</span>rsync-<span class="hljs-number">3.2</span>.<span class="hljs-number">3</span>.tar.gz<br><br><span class="hljs-number">2</span>)、解压并安装<br>tar -xvf rsync-<span class="hljs-number">3.2</span>.<span class="hljs-number">3</span>.tar.gz<br><br><span class="hljs-number">3</span>)、编译安装<br><span class="hljs-comment"># 源码安装rsync时，其编译时所需要的gcc库文件尽量提前安装完毕</span><br><span class="hljs-comment"># 默认安装到/usr/local/目录下</span><br>./configure<br>make &amp;&amp;make install<br><br><span class="hljs-number">4</span>)、设置开机启动<br>echo “<span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/bin/</span>rsync --daemon -config=<span class="hljs-regexp">/etc/</span>rsyncd.conf” &gt;&gt;<span class="hljs-regexp">/etc/</span>profile<br><br></code></pre></td></tr></table></figure>
+
+<h4 id="2、-yum方式安装"><a href="#2、-yum方式安装" class="headerlink" title="2、 yum方式安装"></a>2、 yum方式安装</h4><figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">yum -y install  rsync<br><br><span class="hljs-comment">#设置开机启动</span><br><span class="hljs-keyword">echo</span> “<span class="hljs-string">/usr/local/bin/rsync</span> <span class="hljs-params">--daemon</span> -config=<span class="hljs-string">/etc/rsyncd.conf</span>” &gt;&gt;<span class="hljs-string">/etc/profile</span><br><br></code></pre></td></tr></table></figure>
+
+<h3 id="三、配置rsync-daemon"><a href="#三、配置rsync-daemon" class="headerlink" title="三、配置rsync daemon"></a>三、配置rsync daemon</h3><blockquote>
+<p>rsync的配置分为服务器端和客户端</p>
+<p>使用rsync协议，需要服务端启动<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B&spm=1001.2101.3001.7020">守护进程</a></p>
+</blockquote>
+<p><strong>1、服务端配置</strong></p>
+<ul>
+<li><p><strong>准备rsync配置文件</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 以 rsync 用户启动进程</span><br>uid = rsync<br>gid = rsync<br><br> <span class="hljs-comment"># 无需让rsync以root身份运行，允许接收文件的完整属性</span><br>fake super = <span class="hljs-built_in">yes</span>       <br><br><span class="hljs-comment"># 禁锢推送的数据至某个目录, 不允许跳出该目录</span><br>use <span class="hljs-built_in">chroot</span> = no                <br><br>max connections = 200          <span class="hljs-comment"># 最大连接数</span><br><span class="hljs-built_in">timeout</span> = 600                  <span class="hljs-comment"># 超时时间</span><br>ignore errors                  <span class="hljs-comment"># 忽略错误信息</span><br><br><span class="hljs-built_in">read</span> only = <span class="hljs-literal">false</span>              <span class="hljs-comment"># 对备份数据可读写</span><br><br>list = <span class="hljs-literal">false</span>                   <span class="hljs-comment"># 不允许查看模块信息</span><br><br><span class="hljs-comment"># 定义虚拟用户，作为连接认证用户</span><br>auth <span class="hljs-built_in">users</span> = myuser <br><br><span class="hljs-comment"># 定义rsync服务用户连接认证密码文件路径</span><br>secrets file = /etc/rsync.passwd<br><br><span class="hljs-comment">#### 定义模块信息</span><br>[backup]                <br>comment = commit        <span class="hljs-comment"># 模块注释信息</span><br>path = /backup          <span class="hljs-comment"># 定义接收备份数据目录</span><br><br><span class="hljs-comment"># 只允许10.10.10段ip连接</span><br>hosts allow = 10.10.10.0/24<br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p><strong>配置并启动守护进程</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 需要一个rsync进程运行时使用的普通用户 rsync</span><br>useradd rsync -M -s /sbin/nologin<br><br><span class="hljs-comment"># 服务端需要定义一个客户端连接    虚拟用户名和密码</span><br><span class="hljs-comment"># 密码文件形式  user:passwd</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;myuser:password&quot;</span> &gt; /etc/rsync.passwd<br><span class="hljs-built_in">chmod</span> 600 /etc/rsync.passwd<br><br><span class="hljs-comment"># 准备模块定义好的目录,客户端的数据都存放在该目录下</span><br><span class="hljs-built_in">mkdir</span> /backup<br><span class="hljs-built_in">chown</span> -R rsync.rsync /backup<br><br><span class="hljs-comment"># 启动服务</span><br>rsync --daemon<br><br><span class="hljs-comment"># 查看服务</span><br>ps aux | grep rsync<br>netstat -lntp|grep 873<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>2、客户端使用</strong></p>
+<figure class="highlight perl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs perl"><br><span class="hljs-comment"># 在客户端安装完毕rsync服务后，是不需要启动rsync服务的。</span><br><span class="hljs-comment"># 我们只需要在客户端创建连接rsync服务器时，验证码用户所需要的密码文件即可。</span><br><span class="hljs-comment"># 该密码文件中的密码要与rsync服务器上的密码文件中的密码对应</span><br><span class="hljs-comment"># 并且也要与rsync服务器rsyncd.conf配置文件中的认证模块中的用户匹配。</span><br><br>echo “password”&gt;&gt;<span class="hljs-regexp">/etc/rs</span>ync.passwd<br><br><span class="hljs-keyword">chmod</span> <span class="hljs-number">600</span> /etc/rsync.passwd<br><br><br><span class="hljs-comment"># 查看 rsync 守护程序分配的所有 module 列表，可以执行下面命令。</span><br>rsync rsync:<span class="hljs-regexp">//</span><span class="hljs-number">10.10</span>.<span class="hljs-number">10.10</span><br><br><br><span class="hljs-comment"># 具体写法是服务器与目标目录之间使用双冒号分隔`::`</span><br><span class="hljs-comment"># 地址中的module并不是实际路径名，而是 rsync 守护程序指定的模块名</span><br><br><span class="hljs-comment"># 把本地的文件同步到远程服务器</span><br><span class="hljs-comment"># rsync [OPTION]… [SRC]… [USER@]HOST::DEST</span><br><span class="hljs-comment"># rsync [选项] [--port=]  [--password-file=] [/local/path] [用户名]@服务端IP::[模块名]</span><br><br>rsync -av --password-file=<span class="hljs-regexp">/etc/rs</span>ync.passwd <span class="hljs-keyword">local</span>/ myuser@10.<span class="hljs-number">10.10</span>.<span class="hljs-number">10</span>::backup<br><br><span class="hljs-comment"># 把远程机器的文件同步到本地</span><br><span class="hljs-comment"># rsync [OPTION]… [USER@]HOST::SRC [DEST]</span><br><span class="hljs-comment"># rsync [选项] [--port=] [--password-file=] [用户名@]服务端IP::[模块名]  [/local/path]</span><br><br>rsync -av --password-file=<span class="hljs-regexp">/etc/rs</span>ync.passwd myuser@10.<span class="hljs-number">10.10</span>.<span class="hljs-number">10</span>::backup <span class="hljs-keyword">local</span>/<br><br><br></code></pre></td></tr></table></figure>
+
+<h3 id="四、rsync使用"><a href="#四、rsync使用" class="headerlink" title="四、rsync使用"></a>四、rsync使用</h3><h4 id="1、同步模式模式"><a href="#1、同步模式模式" class="headerlink" title="1、同步模式模式"></a>1、同步模式模式</h4><h5 id="1-1-本地同步"><a href="#1-1-本地同步" class="headerlink" title="1.1 本地同步"></a>1.1 本地同步</h5><figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli"><span class="hljs-comment">##本地  rsync   选项       源      目标</span><br>Local:  rsync [OPTION.<span class="hljs-string">..</span>] SRC.<span class="hljs-string">..</span> [DEST]<br><br><span class="hljs-comment">#将/etc目录备份到/opt目录下，和cp的区别在于会自动增量备份</span><br>rsync -avz <span class="hljs-string">/etc</span> <span class="hljs-string">/opt</span><br><br></code></pre></td></tr></table></figure>
+
+<h5 id="1-2远程同步"><a href="#1-2远程同步" class="headerlink" title="1.2远程同步"></a>1.2远程同步</h5><h6 id="ssh协议"><a href="#ssh协议" class="headerlink" title="ssh协议"></a><strong>ssh协议</strong></h6><figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs ruby"><span class="hljs-comment"># 默认使用 SSH 进行远程登录和数据传输</span><br><span class="hljs-comment"># 不需要做任何配置，需要都安装rsync，操作上类似scp</span><br><br><span class="hljs-comment">#将远端文件拉（下载）到本地</span><br><span class="hljs-title class_">Pull</span>: rsync [<span class="hljs-variable constant_">OPTION</span>...] [<span class="hljs-variable constant_">USER</span>@]<span class="hljs-variable constant_">HOST</span><span class="hljs-symbol">:SRC</span>... [<span class="hljs-variable constant_">DEST</span>]<br>         <br><span class="hljs-comment">#将本地文件推送（上传）到远端</span><br><span class="hljs-title class_">Push</span>: rsync [<span class="hljs-variable constant_">OPTION</span>...] <span class="hljs-variable constant_">SRC</span>... [<span class="hljs-variable constant_">USER</span>@]<span class="hljs-variable constant_">HOST</span><span class="hljs-symbol">:DEST</span><br> <br><span class="hljs-comment">#将etc推送到10.10.10.10下的自定义文件夹下</span><br>rsync -az /etc/ <span class="hljs-number">10.10</span>.<span class="hljs-number">10.10</span><span class="hljs-symbol">:/opt/etc-</span><span class="hljs-variable">$(</span>hostname)-<span class="hljs-variable">$(</span>date +%F)<br><br></code></pre></td></tr></table></figure>
+
+<h6 id="rsync协议"><a href="#rsync协议" class="headerlink" title="rsync协议"></a>rsync协议</h6><blockquote>
+<p>使用rsync协议，需要服务端启动守护进程</p>
+<p>操作参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wq1205750492/article/details/124497271#jump">配置rsync daemon</a></p>
+</blockquote>
+<h4 id="2、命令参数"><a href="#2、命令参数" class="headerlink" title="2、命令参数"></a>2、命令参数</h4><p>常用参数</p>
+<figure class="highlight diff"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs diff"><span class="hljs-deletion">-v, –verbose详细模式输出。</span><br><br><span class="hljs-deletion">-a, –archive归档模式，表示以递归方式传输文件，并保持所有文件属性不变。</span><br><br><span class="hljs-deletion">-z, –compress对备份的文件在传输时进行压缩处理。</span><br><br>–delete：删除那些DST中存在而在SRC中没有的文件。<br><br></code></pre></td></tr></table></figure>
+
+<p>所有参数</p>
+<figure class="highlight diff"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs diff"><span class="hljs-deletion">-a：–archive archive mode 权限保存模式，相当于 -rlptgoD 参数，存档，递归，保持属性等。</span><br><span class="hljs-deletion">-r：–recursive 复制所有下面的资料，递归处理。</span><br><span class="hljs-deletion">-p：–perms 保留档案权限，文件原有属性。</span><br><span class="hljs-deletion">-t：–times 保留时间点，文件原有时间。</span><br><span class="hljs-deletion">-g：–group 保留原有属组。</span><br><span class="hljs-deletion">-o：–owner 保留档案所有者(root only)。</span><br><span class="hljs-deletion">-D：–devices 保留device资讯(root only)。</span><br><span class="hljs-deletion">-l：–links 复制所有的连接，拷贝连接文件。</span><br><span class="hljs-deletion">-z：–compress 压缩模式，当资料在传送到目的端进行档案压缩。</span><br><span class="hljs-deletion">-H：–hard-links 保留硬链接文件。</span><br><span class="hljs-deletion">-A：–acls 保留ACL属性文件，需要配合–perms。</span><br><span class="hljs-deletion">-P：-P参数和 --partial --progress 相同，只是为了把参数简单化，表示传进度。</span><br><span class="hljs-deletion">--version：输出rsync版本。</span><br><span class="hljs-deletion">-v：–verbose 复杂的输出信息。</span><br><span class="hljs-deletion">-u：–update 仅仅进行更新，也就是跳过已经存在的目标位置，并且文件时间要晚于要备份的文件，不覆盖新的文件。</span><br><span class="hljs-deletion">--port=PORT：定义rsyncd(daemon)要运行的port(预设为tcp 873)。</span><br><br><span class="hljs-deletion">--delete：删除那些目标位置有的文件而备份源没有的文件。</span><br><br><span class="hljs-deletion">--delete-before: 接收者在传输之前进行删除操作</span><br><br><span class="hljs-deletion">--password-file=FILE ：从 指定密码文件中获取密码。</span><br><span class="hljs-deletion">--bwlimit=KBPS：限制 I/O 带宽。</span><br><span class="hljs-deletion">--filter “-filename”：需要过滤的文件。</span><br><span class="hljs-deletion">--exclude=filname：需要过滤的文件。</span><br><span class="hljs-deletion">--progress：显示备份过程。</span><br><br></code></pre></td></tr></table></figure>
+
+<h3 id="五、示例"><a href="#五、示例" class="headerlink" title="五、示例"></a>五、示例</h3><h4 id="1、常用示例"><a href="#1、常用示例" class="headerlink" title="1、常用示例"></a>1、常用示例</h4><figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs elixir"><span class="hljs-comment"># 将当前目录下所有文件同步到远端</span><br>rsync -avzP ./* myuser<span class="hljs-variable">@10</span>.<span class="hljs-number">10.10</span>.<span class="hljs-number">15</span>::backup <br><br><span class="hljs-comment"># 从服务端同步数据到本地</span><br>rsync -avzP  myuser<span class="hljs-variable">@10</span>.<span class="hljs-number">10.10</span>.<span class="hljs-number">15</span>::backup .<br><br><span class="hljs-comment"># 保持服务端于客户端上数据完全一致，服务端有则同步给客户端，服务端没有，客户端有的则从客户端删除</span><br><span class="hljs-comment"># –delete 选项，表示客户端上的数据要与服务器端完全一致,多则删之，少则补之</span><br><span class="hljs-comment"># 用的时候要小心点，最好不要把已经有重要数所据的目录，当做本地更新目录，否则会把你的数据全部删除</span><br>rsync -avzP  --delete myuser<span class="hljs-variable">@10</span>.<span class="hljs-number">10.10</span>.<span class="hljs-number">15</span>::backup  /tmp/test/<br><br><span class="hljs-comment"># 下面的 rsync 命令将10.10.10.10主机上的 /www 目录（不包含 /www/logs 和 /www/conf子目录）复制到本地的 /backup/www/ </span><br>rsync -avzP --delete --exclude <span class="hljs-string">&quot;logs/&quot;</span> --exclude <span class="hljs-string">&quot;conf/&quot;</span>  \<br><span class="hljs-number">10.10</span>.<span class="hljs-number">10.10</span><span class="hljs-symbol">:/www/</span> /backup/www/<br><br><br></code></pre></td></tr></table></figure>
+
+<h4 id="2、快速删除大量数据"><a href="#2、快速删除大量数据" class="headerlink" title="2、快速删除大量数据"></a>2、快速删除大量数据</h4><p><strong>1、在<code>need_delete</code> 目录下建立30万个文件</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">time</span> for i in $(seq <span class="hljs-number">1</span> <span class="hljs-number">300000</span>)<br><span class="hljs-attribute">do</span><br><span class="hljs-attribute">echo</span> test &gt;&gt;$i.txt<br><span class="hljs-attribute">done</span><br><br><span class="hljs-comment"># 执行时间</span><br><span class="hljs-attribute">real</span>	<span class="hljs-number">0</span>m42.<span class="hljs-number">267</span>s<br><span class="hljs-attribute">user</span>	<span class="hljs-number">0</span>m6.<span class="hljs-number">756</span>s<br><span class="hljs-attribute">sys</span>	<span class="hljs-number">0</span>m33.<span class="hljs-number">973</span>s<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>2、测试rsync删除</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-comment"># 先创建一个空目录new_dir</span><br><br><span class="hljs-comment"># 然后执行 </span><br><span class="hljs-attribute">time</span> rsync -a --delete-before new_dir/ need_delete/<br><br><span class="hljs-comment"># 只需要几秒钟，速度非常快</span><br><span class="hljs-attribute">real</span>	<span class="hljs-number">0</span>m8.<span class="hljs-number">146</span>s<br><span class="hljs-attribute">user</span>	<span class="hljs-number">0</span>m0.<span class="hljs-number">216</span>s<br><span class="hljs-attribute">sys</span>	<span class="hljs-number">0</span>m7.<span class="hljs-number">127</span>s<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>3、测试 rm -rf 删除</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">time</span> rm -rf need_delete/<br><br><span class="hljs-attribute">real</span>	<span class="hljs-number">0</span>m9.<span class="hljs-number">639</span>s<br><span class="hljs-attribute">user</span>	<span class="hljs-number">0</span>m0.<span class="hljs-number">143</span>s<br><span class="hljs-attribute">sys</span>	<span class="hljs-number">0</span>m8.<span class="hljs-number">250</span>s<br></code></pre></td></tr></table></figure>
+
+<h3 id="六、rsyncd-conf-详解"><a href="#六、rsyncd-conf-详解" class="headerlink" title="六、rsyncd.conf 详解"></a>六、rsyncd.conf 详解</h3><h4 id="1、全局参数"><a href="#1、全局参数" class="headerlink" title="1、全局参数"></a>1、全局参数</h4><figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><code class="hljs applescript"><span class="hljs-comment"># 在独立运行时，用于指定的服务器运行的 IP 地址</span><br>address = IP<br><br><span class="hljs-comment"># 监听端口</span><br>port = <span class="hljs-number">873</span> <br><br><span class="hljs-comment"># rsync 的守护进程将其 PID 写入指定的文件</span><br>pid <span class="hljs-built_in">file</span> = /var/<span class="hljs-built_in">run</span>/rsyncd.pid<br><br><span class="hljs-comment"># 指定支持 max connections 参数的锁文件</span><br>lock <span class="hljs-built_in">file</span> = /var/<span class="hljs-built_in">run</span>/rsync.lock<br><br><span class="hljs-comment"># 指定 rsync 守护进程的日志文件，而不将日志发送给 syslog</span><br><span class="hljs-built_in">log</span> <span class="hljs-built_in">file</span> = /var/<span class="hljs-built_in">log</span>/rsyncd.<span class="hljs-built_in">log</span><br><br><span class="hljs-comment">#========== 控制参数 =============#</span><br> <span class="hljs-comment"># 以指定的 UID 传输文件</span><br>uid = rsync        <br><br><span class="hljs-comment"># 指定该模块以指定的 GID 传输文件。</span><br>gid = rsync                     <br><br><span class="hljs-comment"># 禁锢推送的数据至某个目录, 不允许跳出该目录,</span><br><span class="hljs-comment"># 默认为 yes，则 rsync 在传输文件之前首先 chroot 到 path 参数所指定的目录下</span><br><span class="hljs-comment"># 这样做的原因是实现额外的安全防护，但是缺点是需要 root 权限</span><br><span class="hljs-comment"># 并且不能备份指向 path 外部的符号连接所指向的目录文件</span><br>use chroot = no                <br><br><span class="hljs-comment"># 无需让rsync以root身份运行，允许接收文件的完整属性</span><br>fake super = yes                <br><br><span class="hljs-comment"># 大并发连接数量以保护服务器，超过限制的连接请求将被告知随后再试</span><br><span class="hljs-comment"># 默认为0 （没有限制）</span><br>max connections = <span class="hljs-number">200</span><br><br><span class="hljs-comment"># 超时时间</span><br><span class="hljs-keyword">timeout</span> = <span class="hljs-number">600</span>                  <br><br><span class="hljs-comment"># 指定在 rsync 服务器上运行 delete 操作时是否忽略 I/O 错误。</span><br><span class="hljs-comment"># 一般来说 rsync 在出现 I/O 错误时将将跳过 –delete 操作</span><br><span class="hljs-comment"># 以防止因为暂时的资源不足或其它 I/O 错误导致的严重问题。</span><br>ignore errors <br><br><span class="hljs-comment"># 指定是否允许客户上传文件。</span><br><span class="hljs-comment"># 默认为true，不允许用户上传文件，</span><br><span class="hljs-comment"># 若为 false 并且服务器目录也具有读写权限则允许上传。</span><br><span class="hljs-built_in">read</span> only = <span class="hljs-literal">false</span> <br><br><span class="hljs-comment"># 指定当客户请求列出可以使用的模块列表时，该模块是否应该被列出。</span><br><span class="hljs-comment"># 默认为 true，如果设置该选项为 false，可以创建隐藏的模块</span><br><span class="hljs-built_in">list</span> = <span class="hljs-literal">false</span>                  <br><br></code></pre></td></tr></table></figure>
+
+<p>2、模块参数<br>模块参数主要用于定义 rsync 服务器哪个目录要被同步。</p>
+<p>模块声明的格式必须为 [module] 形式，这个名字就是在 rsync 客户端看到的名字，类似于 Samba 服务器提供的共享名。</p>
+<p>而服务器真正同步的数据是通过 path 来指定的。可以根据自己的需要，来指定多个模块，模块中可以定义以下参数：</p>
+<p>基本模块参数</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-comment"># 指定模块名</span><br><span class="hljs-section">[backup]</span><br><br><span class="hljs-comment"># 指定当前模块在 rsync 服务器上的同步路径，该参数是必须指定的</span><br><span class="hljs-attr">path</span> = /backup  	<br><br><span class="hljs-comment"># 给模块指定一个描述，该描述连同模块名在客户连接得到模块列表时显示给客户</span><br><span class="hljs-attr">comment</span> = commit	<br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>模块文件筛选参数</li>
+</ul>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs gradle"><br># 指定多个由空格隔开的多个文件或目录(相对路径)<br># 并将其添加到 <span class="hljs-keyword">exclude</span> 列表中。这等同于在客户端命令中使用 –<span class="hljs-keyword">exclude</span> 来指定模式。<br><span class="hljs-keyword">exclude</span> = exclude_file<br><br># 指定一个包含 <span class="hljs-keyword">exclude</span> 规则定义的文件名，服务器从该文件中读取 <span class="hljs-keyword">exclude</span> 列表定义<br><span class="hljs-keyword">exclude</span> <span class="hljs-keyword">from</span> = <span class="hljs-keyword">exclude</span>-<span class="hljs-keyword">file</span>.txt<br><br># 指定多个由空格隔开的多个文件或目录(相对路径)，并将其添加到 <span class="hljs-keyword">include</span> 列表中。<br># 这等同于在客户端命令中使用 –<span class="hljs-keyword">include</span> 来指定模式 。<br><span class="hljs-keyword">include</span> = <span class="hljs-keyword">include</span>-<span class="hljs-keyword">file</span>.txt<br><br># 指定一个包含 <span class="hljs-keyword">include</span> 规则定义的文件名，服务器从该文件中读取 <span class="hljs-keyword">include</span> 列表定义<br><span class="hljs-keyword">include</span> <span class="hljs-keyword">from</span> = <span class="hljs-keyword">exclude</span>-<span class="hljs-keyword">file</span>.txt<br><br># 一个模块只能指定一个<span class="hljs-keyword">exclude</span> 参数、一个<span class="hljs-keyword">include</span> 参数<br># 结合 <span class="hljs-keyword">include</span> 和 <span class="hljs-keyword">exclude</span> 可以定义复杂的<span class="hljs-keyword">exclude</span>/<span class="hljs-keyword">include</span> 规则<br># 这几个参数分别与相应的rsync 客户命令选项等价，唯一不同的是它们作用在服务器端<br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>模块用户认证参数</li>
+</ul>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># rsync 默认匿名方式传输</span><br><span class="hljs-comment"># 若只配置匿名访问的 rsync 服务器，则无需设置下述参数</span><br><br><span class="hljs-comment"># 指定由空格或逗号分隔的用户名列表，只有这些用户才允许连接该模块。</span><br><span class="hljs-comment"># 这里的用户和系统用户没有任何关系。用户名和口令以明文方式存放在 secrets file 参数指定的文件中</span><br>auth <span class="hljs-built_in">users</span> = user_name<br><br><span class="hljs-comment"># 指定一个 rsync 认证口令文件。只有在 auth users 被定义时，该文件才起作用</span><br>secrets file = /etc/rsync.passwd<br><br><span class="hljs-comment"># rsync 认证口令文件的权限一定是 600，否则客户端将不能连接服务器。</span><br><span class="hljs-comment"># rsync 认证口令文件中每一行指定一个 用户名:口令 对，格式为：</span><br><span class="hljs-comment"># username:passwd</span><br><br><span class="hljs-comment"># 一般来说口令最好不要超过8个字符</span><br><br><span class="hljs-comment"># 一个rsync配置文件中可以包含多个认证模块，同时一个密码文件中也可以存放多个用户和其对应的密码。</span><br><span class="hljs-comment"># 其中每一个认证模块可以对应不同的客户端。</span><br></code></pre></td></tr></table></figure>
+
+<p>​</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>同步命令：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs awk">rsync -r -avz <span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/docker /m</span>edia<span class="hljs-regexp">/pi/</span>Elements<span class="hljs-regexp">/docker_data/</span><br><br>rsync -r -avz <span class="hljs-regexp">/data /m</span>edia<span class="hljs-regexp">/pi/</span>Elements<span class="hljs-regexp">/har/</span><br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux-rsync/" class="print-no-link">#Linux, rsync</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>rsync详解</div>
+      <div>http://lvyuanj.github.io/2023/11/12/rsync文件同步/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Arvin</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年11月12日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/11/12/docker/" title="解决/var/lib/docker/overlay2占用很大、容器无法启动问题（清理磁盘）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">解决/var/lib/docker/overlay2占用很大、容器无法启动问题（清理磁盘）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/11/12/%E6%A0%91%E8%8E%93%E6%B4%BE%E9%83%A8%E7%BD%B2harbor_arm64/" title="树莓派4b部署Harbor-arm64版本">
+                        <span class="hidden-mobile">树莓派4b部署Harbor-arm64版本</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

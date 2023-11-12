@@ -165,18 +165,6 @@
           
           
             <li class="nav-item">
-              <a class="nav-link" href="/links/" target="_self">
-                <i class="iconfont icon-link-fill"></i>
-                <span>友链</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
               <a class="nav-link" href="/tools/" target="_self">
                 <i class="iconfont icon-link-fill"></i>
                 <span>工具箱</span>
@@ -251,15 +239,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2023/11/11/hello-world/" target="_self">
-          Hello World
+        <a href="/2023/11/12/docker/" target="_self">
+          解决/var/lib/docker/overlay2占用很大、容器无法启动问题（清理磁盘）
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/11/11/hello-world/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2023/11/12/docker/" target="_self">
         <div>
-          Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick
+          Docker - 解决&#x2F;var&#x2F;lib&#x2F;docker&#x2F;overlay2占用很大、容器无法启动问题（清理磁盘）一、首先执行如下命令可以查看 docker 文件夹磁盘使用情况：123[root@pi ~]# du -hs /var/lib/docker/17G     /var/lib/docker/12  二、执行如下可以查看 Docker 的磁盘使用情况（类
         </div>
       </a>
 
@@ -267,12 +255,99 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2023-11-11 22:05" pubdate>
-              2023-11-11
+            <time datetime="2023-11-12 22:33" pubdate>
+              2023-11-12
             </time>
           </div>
         
         
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Docker/">#Docker</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2023/11/12/rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5/" target="_self">
+          rsync详解
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2023/11/12/rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5/" target="_self">
+        <div>
+          rsync详解一、rsync介绍1、rsync是什么1234567rsync（remote synchronize）是Liunx/Unix下的一个远程数据同步工具。它可通过LAN/WAN快速同步多台主机间的文件和目录，并适当利用rsync算法（差分编码）以减少数据的传输。rsync算法并不是每一次都整份传输，而是只传输两个文件的不同部分，因此其传输速度相当快。除此之外，rsync可拷贝、显示目录属
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2023-11-12 22:33" pubdate>
+              2023-11-12
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Linux-rsync/">#Linux, rsync</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2023/11/12/%E6%A0%91%E8%8E%93%E6%B4%BE%E9%83%A8%E7%BD%B2harbor_arm64/" target="_self">
+          树莓派4b部署Harbor-arm64版本
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2023/11/12/%E6%A0%91%E8%8E%93%E6%B4%BE%E9%83%A8%E7%BD%B2harbor_arm64/" target="_self">
+        <div>
+          树莓派4b部署Harbor-arm64版本harbor-arm版本 部署：参考 12345678wget https://github.com/hzliangbin/harbor-arm64/releases/download/v1.9.3/harbor-offline-installer-v1.9.3.tgztar -xf harbor-offline-installer-v1.9.3.tgz
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2023-11-12 22:33" pubdate>
+              2023-11-12
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Linux-docker/">#Linux, docker</a>
+            
+          </div>
         
       </div>
     </article>
